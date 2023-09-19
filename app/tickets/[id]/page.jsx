@@ -1,24 +1,31 @@
+'use client'
+import Error from "next/error"
 export async function generateStaticParams() {
-    const res = await fetch('http://localhost:4000/tickets')
-
-    const tickets = await res.json()
-
+    const res = await fetch('http://localhost:3000/api/tickets')
+    const { tickets } = await res.json()
     return tickets.map((ticket) => ({
-        id: ticket.id
+        id: ticket._id
     }))
 }
 
 const getTicket = async (id) => {
-    const res = await fetch('http://localhost:4000/tickets/' + id, {
-        next: {
-            revalidate: 60
+    try {
+        const res = await fetch(`http://localhost:3000/api/tickets/${id}`, {
+            cache: "no-store"
+        });
+        if (!res.ok) {
+            throw new Error("Failed to fetch ticket");
         }
-    })
-    return res.json()
-}
+        return res.json();
+    } catch (error) {
+        console.error(error);
+        throw error; // Rethrow the error
+    }
+};
 
 export default async function TicketDetails({ params }) {
-    const ticket = await getTicket(params.id)
+    const { id } = params;
+    const ticket = await getTicket(id);
     return (
         <main>
             <nav>
@@ -26,7 +33,8 @@ export default async function TicketDetails({ params }) {
             </nav>
             <div className='card'>
                 <h3>{ticket.title}</h3>
-                <small>Created by {ticket.user_email}</small>
+                {/* <small>Created by {ticket.user_email}</small> */}
+                <small>Created by Sadhak Kumar</small>
                 <p>{ticket.body}</p>
                 <div className={`pill ${ticket.priority}`}>
                     {ticket.priority} priority
